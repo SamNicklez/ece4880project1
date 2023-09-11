@@ -2,7 +2,7 @@ import time
 from datetime import datetime
 
 import RPi.GPIO as GPIO
-import apis
+from apis import API
 
 
 class Pi:
@@ -15,6 +15,12 @@ class Pi:
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(self.button_pin, GPIO.FALLING, callback=self.button_interrupt, bouncetime=200)
+
+    def get_temp_data(self):
+        return self.temp_data
+
+    def set_button_status(self, status):
+        self.button_status = status
 
     def button_interrupt(self, channel):
         print("Button pressed!")
@@ -67,7 +73,7 @@ class Pi:
 
 def main():
     pi = Pi(True, False, 17, '28-3ce0e381d163')
-    apis.start_server()
+    API(pi)
     while True:
         pi.temp_loop()
 

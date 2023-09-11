@@ -1,24 +1,20 @@
 from fastapi import FastAPI
 
+from main import Pi
+
 app = FastAPI()
 
-@app.get("/past")
-async def past():
-    # get past 300 sec of data and return it
-    pass
 
+class API:
+    def __init__(self, pi: Pi):
+        self.pi: Pi = pi
 
-@app.get("/current")
-async def current():
-    # get current data and return it
-    pass
+    @app.get("/data")
+    async def data(self):
+        # get past 300 sec of data and return it
+        return self.pi.get_temp_data()
 
-
-@app.post("/activate/{status}")
-async def activate():
-    # set the LCD to the input status (bool)
-    pass
-
-def start_server():
-    # start the server
-    pass
+    @app.post("/button/{status}")
+    async def button(self, status: bool):
+        # set the LCD to the input status (bool)
+        self.pi.set_button_status(status)
