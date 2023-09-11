@@ -6,12 +6,12 @@ import apis
 
 
 class Pi:
-    def __init__(self):
+    def __init__(self, switch_status, button_status, button_pin, sensor_id):
         self.temp_data = []
-        self.switch_status = True
-        self.button_status = False
-        self.button_pin = 17
-        self.sensor_id = '28-3ce0e381d163'
+        self.switch_status = switch_status
+        self.button_status = button_status
+        self.button_pin = button_pin
+        self.sensor_id = sensor_id
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(self.button_pin, GPIO.FALLING, callback=self.button_interrupt, bouncetime=200)
@@ -66,7 +66,7 @@ class Pi:
 
 
 def main():
-    pi = Pi()
+    pi = Pi(True, False, 17, '28-3ce0e381d163')
     apis.start_server()
     while True:
         pi.temp_loop()
