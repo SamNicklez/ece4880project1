@@ -1,20 +1,18 @@
-from fastapi import FastAPI
+from flask import Flask
+from flask.views import MethodView
 
-from main import Pi
+app = Flask(__name__)
 
-app = FastAPI()
+class API(MethodView):
+    def __init__(self, pi):
+        self.pi = pi
+    
+    def get(self):
+        return str(self.pi.get_temp_data())
 
-
-class API:
-    def __init__(self, pi: Pi):
-        self.pi: Pi = pi
-
-    @app.get("/data")
-    async def data(self):
-        # get past 300 sec of data and return it
-        return self.pi.get_temp_data()
-
-    @app.post("/button/{status}")
-    async def button(self, status: bool):
-        # set the LCD to the input status (bool)
+    def post(self, status):
         self.pi.set_button_status(status)
+        return "Button status set to " + str(status)
+    
+
+       
