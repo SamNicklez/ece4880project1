@@ -5,7 +5,8 @@ CARRIERS = {
     "att": "@mms.att.net",
     "tmobile": "@tmomail.net",
     "verizon": "@vtext.com",
-    "sprint": "@messaging.sprintpcs.com"
+    "sprint": "@messaging.sprintpcs.com",
+    "uscellular": "@email.uscc.net"
 }
  
 EMAIL = "lukefarmer6801@gmail.com"  # Replace with your Gmail email
@@ -32,3 +33,6 @@ if __name__ == "__main__":
     message = sys.argv[3]
  
     send_message(phone_number, carrier, message)
+    
+    
+    
