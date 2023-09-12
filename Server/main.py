@@ -4,20 +4,24 @@ from datetime import datetime
 
 import RPi.GPIO as GPIO
 
+from apis import app, ButtonAPI, TemperatureAPI
 from thermometer import temp_loop
-from apis import app, API
 
 
 class Pi:
-    def __init__(self, ip, port, switch_status, button_status_phys, button_status_comp, button_pin, sensor_id):
+    def __init__(self, ip, port, button_pin, sensor_id):
         self.ip = ip
         self.port = port
         self.temp_data = []
-        self.switch_status = switch_status
-        self.button_status_phys = button_status_phys
-        self.button_status_comp = button_status_comp
+        self.switch_status = True
+        self.button_status_phys = False
+        self.button_status_comp = False
         self.button_pin = button_pin
         self.sensor_id = sensor_id
+
+        self.email = None
+        self.min_temp = None
+        self.max_temp = None
 
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -34,10 +38,6 @@ class Pi:
 
         print("Button released!")
         # Put your interrupt function code here...
-
-
-
-
 
     def run_temp_loop(self):
         while True:
@@ -64,13 +64,11 @@ class Pi:
             self.lcd_loop()
 
 
-
-
 def main():
-    pi = Pi("0.0.0.0", 5000, True, False, 17, '28-3ce0e381d163')
+    pi = Pi("0.0.0.0", 5000, 17, '28-3ce0e381d163')
 
-    app.add_url_rule('/data', view_func=API.as_view('data', pi=pi))
-    app.add_url_rule('/button/<status>', view_func=API.as_view('button', pi=pi))
+    app.add_url_rule('/data', view_func=TemperatureAPI.as_view('data', pi=pi))
+    app.add_url_rule('/button/<status>', view_func=ButtonAPI.as_view('button', pi=pi))
 
     temp_thread = threading.Thread(target=pi.run_temp_loop)
     temp_thread.daemon = True
@@ -80,7 +78,9 @@ def main():
     lcd_thread.daemon = True
     lcd_thread.start()
 
-    API(pi)
+    TemperatureAPI(pi)
+    ButtonAPI(pi)
+
     app.run(port=pi.port, host=pi.ip)
 
 

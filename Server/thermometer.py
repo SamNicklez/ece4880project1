@@ -4,10 +4,17 @@ def temp_loop(pi):
     if len(pi.temp_data) >= 300:
         pi.temp_data.pop(0)
 
+    if temperature > pi.max_temp:
+        # TODO send max temp text message
+        pass
+    elif temperature < pi.min_temp:
+        # TODO send min temp text message
+        pass
+
     if temperature is None:
         print("ERROR")
     elif temperature == 0.0:
-        pi.temp_data.append(False)
+        pi.temp_data.append("null")
     else:
         pi.temp_data.append(temperature)
 
