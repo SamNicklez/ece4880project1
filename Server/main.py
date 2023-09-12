@@ -4,7 +4,7 @@ from datetime import datetime
 
 import RPi.GPIO as GPIO
 
-from thermometer import read_temperature
+from thermometer import temp_loop
 from apis import app, API
 
 
@@ -18,6 +18,7 @@ class Pi:
         self.button_status_comp = button_status_comp
         self.button_pin = button_pin
         self.sensor_id = sensor_id
+
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(self.button_pin, GPIO.FALLING, callback=self.button_interrupt, bouncetime=200)
@@ -35,30 +36,13 @@ class Pi:
         # Put your interrupt function code here...
 
 
-    def temp_loop(self):
-        temperature = read_temperature(self)
 
-        if len(self.temp_data) >= 300:
-            self.temp_data.pop(0)
-
-        if temperature is None:
-            print("ERROR")
-        elif temperature == 0.0:
-            self.temp_data.append(False)
-        else:
-            self.temp_data.append(temperature)
-
-        print("Temperature: " + str(temperature) + " °C")
-        print("Length of Queue: " + str(len(self.temp_data)))
-        print("Switch Status: " + str(self.switch_status))
-        print("Button Status PHYS: " + str(self.button_status_phys))
-        print("Button Status COMP: " + str(self.button_status_comp))
 
 
     def run_temp_loop(self):
         while True:
             a = datetime.now()
-            self.temp_loop()
+            temp_loop(self)
             time.sleep(1 - (datetime.now() - a).total_seconds())
 
     def lcd_loop(self):
