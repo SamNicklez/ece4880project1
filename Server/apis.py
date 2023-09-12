@@ -9,8 +9,30 @@ class API(MethodView):
         self.pi = pi
 
     def get(self):
-        return str(self.pi.temp_data)
+        if self.pi.switch_status:
+            resp = app.response_class(
+                response=str(self.pi.temp_data),
+                status=200,
+            )
+            return resp
+        else:
+            resp = app.response_class(
+                response="Switch is off",
+                status=409,
+            )
+            return resp
 
     def post(self, status):
-        self.pi.button_status_comp = status
-        return "Button status set to " + str(status)
+        try:
+            self.pi.button_status_comp = status
+            resp = app.response_class(
+                response="Button status set to " + str(status),
+                status=200,
+            )
+            return resp
+        except Exception as e:
+            resp = app.response_class(
+                response="An error occurred: " + str(e),
+                status=500,
+            )
+            return resp

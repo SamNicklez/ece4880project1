@@ -4,14 +4,15 @@ from datetime import datetime
 
 import RPi.GPIO as GPIO
 
+from thermometer import read_temperature
 from apis import app, API
 
 
 class Pi:
-    def __init__(self, switch_status, button_status_phy, button_status_comp, button_pin, sensor_id):
+    def __init__(self, switch_status, button_status_phys, button_status_comp, button_pin, sensor_id):
         self.temp_data = []
         self.switch_status = switch_status
-        self.button_status_phy = button_status_phy
+        self.button_status_phys = button_status_phys
         self.button_status_comp = button_status_comp
         self.button_pin = button_pin
         self.sensor_id = sensor_id
@@ -31,24 +32,9 @@ class Pi:
         print("Button released!")
         # Put your interrupt function code here...
 
-    def read_temperature(self):
-        try:
-            # Read the raw temperature data from the sensor
-            with open(f"/sys/bus/w1/devices/{self.sensor_id}/w1_slave", "r") as sensor_file:
-                lines = sensor_file.readlines()
-
-            # Extract the temperature from the second line of the output
-            temperature_line = lines[1].strip().split("=")[-1]
-            temperature_celsius = float(temperature_line) / 1000.0
-
-            return temperature_celsius
-
-        except Exception as e:
-            print(f"An error occurred: {str(e)}")
-            return None
 
     def temp_loop(self):
-        temperature = self.read_temperature()
+        temperature = read_temperature(self)
 
         if len(self.temp_data) >= 300:
             self.temp_data.pop(0)
@@ -63,13 +49,35 @@ class Pi:
         print("Temperature: " + str(temperature) + " °C")
         print("Length of Queue: " + str(len(self.temp_data)))
         print("Switch Status: " + str(self.switch_status))
-        print("Button Status: " + str(self.button_status))
+        print("Button Status PHYS: " + str(self.button_status_phys))
+        print("Button Status COMP: " + str(self.button_status_comp))
+
 
     def run_temp_loop(self):
         while True:
             a = datetime.now()
             self.temp_loop()
             time.sleep(1 - (datetime.now() - a).total_seconds())
+
+    def lcd_loop(self):
+        if self.switch_status:
+            if self.button_status_phys or self.button_status_comp:
+                # turn on LCD
+                # display temp
+                pass
+            else:
+                # turn off LCD
+                pass
+        else:
+            # turn off LCD
+            pass
+        pass
+
+    def run_lcd_loop(self):
+        while True:
+            self.lcd_loop()
+
+
 
 
 def main():
@@ -80,6 +88,10 @@ def main():
     temp_thread = threading.Thread(target=pi.run_temp_loop)
     temp_thread.daemon = True
     temp_thread.start()
+
+    lcd_thread = threading.Thread(target=pi.run_lcd_loop)
+    lcd_thread.daemon = True
+    lcd_thread.start()
 
     API(pi)
     app.run(port=5000, host='0.0.0.0')
