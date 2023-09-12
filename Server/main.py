@@ -19,7 +19,8 @@ class Pi:
         self.button_pin = button_pin
         self.sensor_id = sensor_id
 
-        self.email = None
+        self.phone_number = None
+        self.carrier = None
         self.min_temp = None
         self.max_temp = None
 

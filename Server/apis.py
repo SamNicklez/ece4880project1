@@ -30,8 +30,9 @@ class TemperatureAPI(MethodView):
 
     def post(self):
         try:
-            if request.form["email"] is not None and request.form["max_temp"] is not None and request.form["min_temp"] is not None:
-                self.pi.email = request.form["email"]
+            if request.form["phone_number"] is not None and request.form["carrier"] is not None and request.form["max_temp"] is not None and request.form["min_temp"] is not None:
+                self.pi.phone_number = request.form["phone_number"]
+                self.pi.carrier = request.form["carrier"]
                 self.pi.max_temp = request.form["max_temp"]
                 self.pi.min_temp = request.form["min_temp"]
             else:
