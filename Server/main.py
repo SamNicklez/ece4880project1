@@ -1,27 +1,23 @@
-import time
 import threading
+import time
 from datetime import datetime
 
 import RPi.GPIO as GPIO
+
 from apis import app, API
 
 
 class Pi:
-    def __init__(self, switch_status, button_status, button_pin, sensor_id):
+    def __init__(self, switch_status, button_status_phy, button_status_comp, button_pin, sensor_id):
         self.temp_data = []
         self.switch_status = switch_status
-        self.button_status = button_status
+        self.button_status_phy = button_status_phy
+        self.button_status_comp = button_status_comp
         self.button_pin = button_pin
         self.sensor_id = sensor_id
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(self.button_pin, GPIO.FALLING, callback=self.button_interrupt, bouncetime=200)
-
-    def get_temp_data(self):
-        return self.temp_data
-
-    def set_button_status(self, status):
-        self.button_status = status
 
     def button_interrupt(self, channel):
         print("Button pressed!")
@@ -68,14 +64,12 @@ class Pi:
         print("Length of Queue: " + str(len(self.temp_data)))
         print("Switch Status: " + str(self.switch_status))
         print("Button Status: " + str(self.button_status))
-        
+
     def run_temp_loop(self):
         while True:
             a = datetime.now()
             self.temp_loop()
-            time.sleep(1 - (datetime.now() - a).total_seconds())            
-
-
+            time.sleep(1 - (datetime.now() - a).total_seconds())
 
 
 def main():
@@ -86,10 +80,10 @@ def main():
     temp_thread = threading.Thread(target=pi.run_temp_loop)
     temp_thread.daemon = True
     temp_thread.start()
-    
+
     API(pi)
-    app.run(port=5000, host='0.0.0.0') 
-    
+    app.run(port=5000, host='0.0.0.0')
+
 
 if __name__ == "__main__":
     main()
