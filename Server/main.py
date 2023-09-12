@@ -9,7 +9,9 @@ from apis import app, API
 
 
 class Pi:
-    def __init__(self, switch_status, button_status_phys, button_status_comp, button_pin, sensor_id):
+    def __init__(self, ip, port, switch_status, button_status_phys, button_status_comp, button_pin, sensor_id):
+        self.ip = ip
+        self.port = port
         self.temp_data = []
         self.switch_status = switch_status
         self.button_status_phys = button_status_phys
@@ -81,7 +83,8 @@ class Pi:
 
 
 def main():
-    pi = Pi(True, False, 17, '28-3ce0e381d163')
+    pi = Pi("0.0.0.0", 5000, True, False, 17, '28-3ce0e381d163')
+
     app.add_url_rule('/data', view_func=API.as_view('data', pi=pi))
     app.add_url_rule('/button/<status>', view_func=API.as_view('button', pi=pi))
 
@@ -94,7 +97,7 @@ def main():
     lcd_thread.start()
 
     API(pi)
-    app.run(port=5000, host='0.0.0.0')
+    app.run(port=pi.port, host=pi.ip)
 
 
 if __name__ == "__main__":
