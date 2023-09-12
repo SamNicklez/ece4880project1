@@ -1,8 +1,9 @@
 import time
+import threading
 from datetime import datetime
 
 import RPi.GPIO as GPIO
-from apis import API
+from apis import app, API
 
 
 class Pi:
@@ -51,7 +52,6 @@ class Pi:
             return None
 
     def temp_loop(self):
-        start_time = datetime.now()
         temperature = self.read_temperature()
 
         if len(self.temp_data) >= 300:
@@ -64,19 +64,32 @@ class Pi:
         else:
             self.temp_data.append(temperature)
 
-        # print("Temperature: " + str(tempValues) + " °C\n")
+        print("Temperature: " + str(temperature) + " °C")
         print("Length of Queue: " + str(len(self.temp_data)))
-        sleep_time = datetime.now() - start_time
-        print(sleep_time)
-        time.sleep(sleep_time.total_seconds())
+        print("Switch Status: " + str(self.switch_status))
+        print("Button Status: " + str(self.button_status))
+        
+    def run_temp_loop(self):
+        while True:
+            a = datetime.now()
+            self.temp_loop()
+            time.sleep(1 - (datetime.now() - a).total_seconds())            
+
+
 
 
 def main():
     pi = Pi(True, False, 17, '28-3ce0e381d163')
-    API(pi)
-    while True:
-        pi.temp_loop()
+    app.add_url_rule('/data', view_func=API.as_view('data', pi=pi))
+    app.add_url_rule('/button/<status>', view_func=API.as_view('button', pi=pi))
 
+    temp_thread = threading.Thread(target=pi.run_temp_loop)
+    temp_thread.daemon = True
+    temp_thread.start()
+    
+    API(pi)
+    app.run(port=5000, host='0.0.0.0') 
+    
 
 if __name__ == "__main__":
     main()
