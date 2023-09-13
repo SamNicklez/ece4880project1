@@ -14,6 +14,7 @@ class ButtonAPI(MethodView):
             resp = app.response_class(
                 response="Button status set to " + str(status),
                 status=200,
+                headers=[('Access-Control-Allow-Origin', '*')],
             )
             return resp
         except Exception as e:
@@ -39,12 +40,14 @@ class TemperatureAPI(MethodView):
                 resp = app.response_class(
                     response="Invalid parameters",
                     status=400,
+                    headers=[('Access-Control-Allow-Origin', '*')],
                 )
                 return resp
         except Exception as e:
             resp = app.response_class(
                 response="An error occurred: " + str(e),
                 status=500,
+                headers=[('Access-Control-Allow-Origin', '*')],
             )
             return resp
 
@@ -54,11 +57,13 @@ class TemperatureAPI(MethodView):
             resp = app.response_class(
                 response=str(self.pi.temp_data),
                 status=200,
+                headers=[('Access-Control-Allow-Origin', '*')],
             )
             return resp
         else:
             resp = app.response_class(
                 response="Switch is off",
                 status=409,
+                headers=[('Access-Control-Allow-Origin', '*')],
             )
             return resp
