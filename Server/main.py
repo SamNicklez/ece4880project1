@@ -21,6 +21,7 @@ class Pi:
         self.button_pin = button_pin
         self.sensor_id = sensor_id
 
+        self.message_buffer = False
         self.phone_number = None
         self.carrier = None
         self.min_temp = 10
@@ -46,7 +47,10 @@ class Pi:
         while True:
             a = datetime.now()
             temp_loop(self)
-            time.sleep(1 - (datetime.now() - a).total_seconds())
+            try:
+                time.sleep(1 - (datetime.now() - a).total_seconds())
+            except:
+                pass
 
     def lcd_loop(self):
         if self.switch_status:

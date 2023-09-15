@@ -10,7 +10,7 @@ class ButtonAPI(MethodView):
 
     def post(self, status):
         try:
-            self.pi.button_status_comp = status
+            self.pi.button_status_comp: bool = status
             resp = app.response_class(
                 response="Button status set to " + str(status),
                 status=200,
@@ -21,6 +21,7 @@ class ButtonAPI(MethodView):
             resp = app.response_class(
                 response="An error occurred: " + str(e),
                 status=500,
+                headers=[('Access-Control-Allow-Origin', '*')],
             )
             return resp
 
@@ -31,11 +32,22 @@ class TemperatureAPI(MethodView):
 
     def post(self):
         try:
-            if request.form["phone_number"] is not None and request.form["carrier"] is not None and request.form["max_temp"] is not None and request.form["min_temp"] is not None:
-                self.pi.phone_number = request.form["phone_number"]
-                self.pi.carrier = request.form["carrier"]
-                self.pi.max_temp = request.form["max_temp"]
-                self.pi.min_temp = request.form["min_temp"]
+            json = request.get_json()
+            if json["phone_number"] is not None and json["carrier"] is not None and json["max_temp"] is not None and json["min_temp"] is not None:
+                self.pi.phone_number = str(json["phone_number"])
+                self.pi.carrier = json["carrier"]
+                self.pi.max_temp = int(json["max_temp"])
+                self.pi.min_temp = int(json["min_temp"])
+                resp = app.response_class(
+                    response=f"Successful:\
+                        \tPhone Number = {self.pi.phone_number}\n\
+                        \tCarrier = {self.pi.carrier}\n\
+                        \tMax Temp = {self.pi.max_temp}\n\
+                        \tMin Temp = {self.pi.min_temp}",
+                    status=200,
+                    headers=[('Access-Control-Allow-Origin', '*')],
+                )
+                return resp
             else:
                 resp = app.response_class(
                     response="Invalid parameters",
