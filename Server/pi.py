@@ -28,16 +28,14 @@ class Pi:
         GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(self.button_pin, GPIO.BOTH, callback=self.button_interrupt, bouncetime=20)
 
-    def button_interrupt(self):
+    def button_interrupt(self, channel):
         print("Button Interrupt!")
         time.sleep(.01)
 
         # Wait for the button to be released
         if GPIO.input(self.button_pin) == GPIO.LOW:
-            print("LOW")
             self.button_status_phys = True
         elif GPIO.input(self.button_pin) == GPIO.HIGH:
-            print("HIGH")
             self.button_status_phys = False
 
     def run_temp_loop(self):

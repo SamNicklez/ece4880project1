@@ -1,6 +1,7 @@
 import threading
 import json
-from flask import Flask, request
+from flask import *
+
 
 from lcd import *
 from pi import Pi
@@ -13,6 +14,17 @@ pi = Pi("172.23.49.73", 5000, 17, '28-3ce0e381d163')
 @app.route('/button/<status>', methods=['POST'])
 def post_button(status: bool):
     try:
+        if status == "True":
+            status = True
+        elif status == "False":
+            status = False
+        else:
+            resp = app.response_class(
+                response="Invalid parameters",
+                status=400,
+                headers=[('Access-Control-Allow-Origin', '*')],
+            )
+            return resp
         pi.button_status_comp = status
         resp = app.response_class(
             response="Button status set to " + str(status),
@@ -32,22 +44,15 @@ def post_button(status: bool):
 @app.route('/settings', methods=['POST'])
 def post_settings():
     try:
-        if request.is_json:
-            json = request.get_json()
-        else:
-            resp = app.response_class(
-                response="Invalid JSON",
-                status=400,
-                headers=[('Access-Control-Allow-Origin', '*')],
-            )
-            return resp
-
-        if json["phone_number"] is not None and json["carrier"] is not None and json["max_temp"] is not None and \
-                json["min_temp"] is not None:
-            pi.phone_number = str(json["phone_number"])
-            pi.carrier = json["carrier"]
-            pi.max_temp = int(json["max_temp"])
-            pi.min_temp = int(json["min_temp"])
+        req = request.get_data()
+        json_data = json.loads(req.decode('utf8').replace("'", '"'))
+        
+        if json_data["phone_number"] is not None and json_data["carrier"] is not None and json_data["max_temp"] is not None and \
+                json_data["min_temp"] is not None:
+            pi.phone_number = str(json_data["phone_number"])
+            pi.carrier = json_data["carrier"]
+            pi.max_temp = int(json_data["max_temp"])
+            pi.min_temp = int(json_data["min_temp"])
             resp = app.response_class(
                 response=f"Successfully Set:\n\
                     \tPhone Number = {pi.phone_number}\n\
@@ -77,15 +82,17 @@ def post_settings():
 @app.route('/settings', methods=['GET'])
 def get_settings():
     try:
-        resp = app.response_class (
-            response={
+        payload = {
                 "phone_number": pi.phone_number,
                 "carrier": pi.carrier,
                 "max_temp": pi.max_temp,
                 "min_temp": pi.min_temp,
-            },
+            }
+        resp = app.response_class(
+            response=json.dumps(payload),
             status=200,
-            headers=[('Access-Control-Allow-Origin', '*')],
+            headers=[('Access-Control-Allow-Origin', '*'),
+                     ('Content_Type','application/json')],
         )
         return resp
     except Exception as e:

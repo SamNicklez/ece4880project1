@@ -44,6 +44,10 @@ class LCD:
         self.lcd_byte(0x0C, self.LCD_CMD) # 001100 Display On,Cursor Off, Blink Off
         self.lcd_byte(0x28, self.LCD_CMD) # 101000 Data length, number of lines, font size
         self.lcd_byte(0x01, self.LCD_CMD) # 000001 Clear display
+        
+        # turn off LCD
+        self.LCD_BACKLIGHT = 0x00
+        self.clear()
 
     def lcd_byte(self, bits, mode):
         # Send byte to data pins
