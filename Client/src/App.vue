@@ -30,7 +30,14 @@ export default {
       isCel: true,
       componentKey: 0,
       fetchData: null,
+      compatConfig: { MODE: 3 },
       loaded: false,
+      modalEnable: false,
+      carrier: "att",
+      carrier2: null,
+      upperTemp: 50,
+      lowerTemp: 10,
+      phoneNumber: '3193335747',
       data: {
         labels: [],
         datasets: [
@@ -44,6 +51,7 @@ export default {
         ]
       },
       options: {
+        responsive: true,
         maintainAspectRatio: true,
         type: 'linear',
         bezierCurve: true,
@@ -78,6 +86,9 @@ export default {
       }
     };
   },
+  /**
+   * runs on the creation of the webpage
+   */
   created() {
     this.updateData()
     this.grabLast300()
@@ -86,6 +97,9 @@ export default {
     }, 1000);
   },
   methods: {
+    /**
+     * Grabs the last 300 seconds of data from the server
+     */
     async grabLast300() {
       while (true) {
         const startTime = performance.now(); // Get the start time
@@ -108,8 +122,11 @@ export default {
         await new Promise(resolve => setTimeout(resolve, sleepDuration)); // Sleep for the calculated duration
       }
     },
+    /**
+     * updates the graph with the most current data available
+     */
     updateData() {
-      this.loaded = false
+      //this.loaded = false
       this.data.labels = []
       this.data.datasets[0].data = []
       for (var i = 0; i < 300; i++) {
@@ -132,13 +149,22 @@ export default {
         }
       }
       if (this.fetchData != null) {
-        this.loaded = true;
+        //this.loaded = true;
         var list = this.fetchData
-        console.log(this.$refs.myChart.chart.data.datasets[0].data)
+        //console.log(this.$refs.myChart.chart.data.datasets[0].data)
+        if (this.isCel) {
+          for (var i = 0; i < 300; i++) {
+            list[i] = (list[i] * 9 / 5) + 32
+          }
+        }
         this.$refs.myChart.chart.data.datasets[0].data = list
         this.$refs.myChart.chart.update('none')
       }
     },
+    /**
+     * Handles errors if server is down
+     * @param {*} error 
+     */
     fetchError(error) {
       console.log(error)
       //this function is used for if the chart fetch fails
@@ -152,6 +178,9 @@ export default {
         this.currentTemp = 'no data available'
       }
     },
+    /**
+     * Converts the current temperture to a string to display to the user
+     */
     tempToString() {
       if (this.isCel) {
         return this.currentTemp + " \u{2103}"
@@ -160,6 +189,9 @@ export default {
         return ((this.currentTemp * 9 / 5) + 32) + " \u{2109}"
       }
     },
+    /**
+     * Changes the scale of the table, converts from C to F and vis versa
+     */
     swapTemp() {
       if (this.isCel) {
         this.isCel = false
@@ -192,25 +224,87 @@ export default {
         }
         this.componentKey += 1;
       }
+    },
+    /**
+     * Sets user defined parameters and sends it to the server
+     */
+    setPhone() {
+      const phonePattern = /^(?:\+1)?\s*\(?(\d{3})\)?[-.\s]*?(\d{3})[-.\s]*?(\d{4})$/;
+      const lowTem = parseFloat(this.lowerTemp)
+      const highTem = parseFloat(this.upperTemp)
+      if (phonePattern.test(this.phoneNumber)) {
+        // If it's valid, remove any non-digit characters and format it
+        const formattedNumber = this.phoneNumber.replace(/\D/g, "");
+        this.phoneNumber = formattedNumber
+      } 
+      else {
+        // If it's not valid, return null or any other appropriate value
+        alert("Please enter a valid phone number");
+        this.phoneNumber = ""
+        return
+      }
+      if((!isNaN(lowTem) && typeof lowTem === 'number') && ((!isNaN(highTem) && typeof highTem === 'number'))){
+        if(lowTem < highTem){
+          this.lowerTemp = lowTem
+          this.upperTemp = highTem
+          //DO API CALL HERE
+
+
+
+
+
+
+
+        }
+        else if(lowTem == highTem){
+          alert("Lower tempature and upper temperature cannot be equal");
+          return
+        }
+        else{
+          alert("Lower tempature cannot be a larger value than the upper temperature");
+          return
+        }
+      }
+      else{
+        alert("Please enter a valid temperature");
+        return
+      }
+      this.modalEnable = false;
     }
 
   },
 };
 </script>
-
 <template>
   <div style="min-width: 100vw; min-height: 100vh; background-color: white; position: relative; left:0; top:0;">
     <div style="min-width: 95vw; min-height: 80vh; align-items: center; padding-top: 20vh;">
       <h1 size="+2" style="margin-left: 2.5vw;">Current Temperature: {{ tempToString() }}</h1>
-      <button class="btn btn-secondary" style="margin-left: 2.5vw;" @mousedown="toggleBoxButton(true)"
-        @mouseup="toggleBoxButton(false)">Turn on box display</button>
-      <button class="btn btn-secondary" style="margin-left: 2.5vw;" v-on:click="swapTemp()">{{ this.message }}</button>
+      <v-btn style="margin-left: 2.5vw;" @mousedown="toggleBoxButton(true)" @mouseup="toggleBoxButton(false)">Turn on box
+        display</v-btn>
+      <v-btn style="margin-left: 2.5vw;" v-on:click="swapTemp()">{{ this.message }}</v-btn>
+      <v-btn style="margin-left: 2.5vw;" variant="outlined" @click="modalEnable = !modalEnable">
+        <b>Settings</b>
+      </v-btn>
       <Line ref="myChart" :key="componentKey" :data="this.data" :options="this.options"
         style="position: absolute; height:40vh; width:80vw; padding-right: 10vw;" />
     </div>
   </div>
+  <v-dialog v-model="modalEnable" persistent max-width="40vw">
+    <v-card>
+      <v-card-title class="headline">Text Message Settings</v-card-title>
+      <v-select style="margin-left: 2.5vw; margin-right: 2.5vw; margin-top: 1vh;" v-model="carrier"
+        :items="['att', 'tmobile', 'verizon', 'sprint', 'uscellular']"></v-select>
+      <v-text-field style="margin-left: 2.5vw; margin-right: 2.5vw;" v-model="phoneNumber" label="Phone Number"
+        variant="outlined"></v-text-field>
+      <v-text-field style="margin-left: 2.5vw; margin-right: 2.5vw;" v-model="lowerTemp" label="Min Temp (Celcius)"
+        variant="outlined"></v-text-field>
+      <v-text-field style="margin-left: 2.5vw; margin-right: 2.5vw;" v-model="upperTemp" label="Max Temp (Celcius)"
+        variant="outlined"></v-text-field>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn @click="setPhone()">Return</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
-
-<style scoped>
-/* You can add custom CSS styles here if needed */
-</style>
+<style scoped>/* add css if needed */</style>
