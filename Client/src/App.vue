@@ -29,6 +29,8 @@ export default {
       message: 'Switch to \u{2109}',
       isCel: true,
       componentKey: 0,
+      fetchData: null,
+      loaded: false,
       data: {
         labels: [],
         datasets: [
@@ -42,7 +44,6 @@ export default {
         ]
       },
       options: {
-        responsive: true,
         maintainAspectRatio: true,
         type: 'linear',
         bezierCurve: true,
@@ -78,97 +79,122 @@ export default {
     };
   },
   created() {
-    this.graphSetup();
-    const globalSet = this
-    function ut() {
-      globalSet.grabLast300()
-    }
-    setInterval(ut, 1000);
-},
-methods: {
-  graphSetup() {
-    this.data.labels = []
-    this.data.datasets[0].data = []
-    for (var i = 0; i < 300; i++) {
-      if (i == 0 || i == 99 || i == 199 || i == 299) {
-        if (i == 0) {
-          this.data.labels.push(300)
-        }
-        else if (i == 99) {
-          this.data.labels.push(200)
-        }
-        else if (i == 199) {
-          this.data.labels.push(100)
+    this.updateData()
+    this.grabLast300()
+    setInterval(() => {
+      this.updateData()
+    }, 1000);
+  },
+  methods: {
+    async grabLast300() {
+      while (true) {
+        const startTime = performance.now(); // Get the start time
+        fetch('http://172.23.49.73:5000/data')
+          .then(res => res.json())
+          .then(data => {
+            this.fetchData = data;
+          })
+          .then(() => {
+            this.currentTemp = this.fetchData[299]
+          }).catch((error) => {
+            console.log(error)
+          });
+        const endTime = performance.now(); // Get the end time
+        const executionTime = endTime - startTime; // Calculate the execution time in milliseconds
+
+        // Calculate the sleep duration based on the execution time
+        const sleepDuration = Math.max(0, 1000 - executionTime); // Ensure a minimum sleep of 0 milliseconds
+
+        await new Promise(resolve => setTimeout(resolve, sleepDuration)); // Sleep for the calculated duration
+      }
+    },
+    updateData() {
+      this.loaded = false
+      this.data.labels = []
+      this.data.datasets[0].data = []
+      for (var i = 0; i < 300; i++) {
+        if (i == 0 || i == 99 || i == 199 || i == 299) {
+          if (i == 0) {
+            this.data.labels.push(300)
+          }
+          else if (i == 99) {
+            this.data.labels.push(200)
+          }
+          else if (i == 199) {
+            this.data.labels.push(100)
+          }
+          else {
+            this.data.labels.push(0)
+          }
         }
         else {
-          this.data.labels.push(0)
+          this.data.labels.push(300 - i)
         }
+      }
+      if (this.fetchData != null) {
+        this.loaded = true;
+        var list = this.fetchData
+        console.log(this.$refs.myChart.chart.data.datasets[0].data)
+        this.$refs.myChart.chart.data.datasets[0].data = list
+        this.$refs.myChart.chart.update('none')
+      }
+    },
+    fetchError(error) {
+      console.log(error)
+      //this function is used for if the chart fetch fails
+      for (var i = 0; i < 300; i++) {
+        if (i < 299) {
+          this.data.datasets[0].data[i] = this.data.datasets[0].data[i + 1]
+        }
+        else {
+          this.data.datasets[0].data[i] = "null"
+        }
+        this.currentTemp = 'no data available'
+      }
+    },
+    tempToString() {
+      if (this.isCel) {
+        return this.currentTemp + " \u{2103}"
       }
       else {
-        this.data.labels.push(300 - i)
+        return ((this.currentTemp * 9 / 5) + 32) + " \u{2109}"
       }
-      this.data.datasets[0].data.push(Math.floor(Math.random() * 40) + 10)
-      //this.grabLast300()
-      //Eventually fetch real data
+    },
+    swapTemp() {
+      if (this.isCel) {
+        this.isCel = false
+        this.options.scales.y.max = 122
+        this.options.scales.y.min = 50
+        this.options.scales.y.title.text = 'Temp, \u{2109}'
+        this.options.scales.y.title.display = true
+        this.message = 'Switch to \u{2103}'
+        for (var i = 0; i < this.data.datasets[0].data.length; i++) {
+          // (0°C × 9/5) + 32
+          if (!isNaN(this.data.datasets[0].data[i])) {
+            this.data.datasets[0].data[i] = (this.data.datasets[0].data[i] * 9 / 5) + 32
+          }
+        }
+        this.componentKey += 1;
+      }
+      else {
+        this.isCel = true
+        this.options.scales.y.max = 50
+        this.options.scales.y.min = 10
+        this.options.scales.y.title.text = 'Temp, \u{2103}'
+        this.options.scales.y.title.display = true
+        this.message = 'Switch to \u{2109}'
+        for (var i = 0; i < this.data.datasets[0].data.length; i++) {
+          // (0°C × 9/5) + 32
+          if (!isNaN(this.data.datasets[0].data[i])) {
+            //(°F - 32) ÷ 9/5
+            this.data.datasets[0].data[i] = (this.data.datasets[0].data[i] - 32) / (9 / 5)
+          }
+        }
+        this.componentKey += 1;
+      }
     }
-  },
-  grabLast300() {
-    //this function is used for if the chart fetch fails
-    for(var i = 0; i < 300; i++){
-      if(i < 299){
-        this.data.datasets[0].data[i] = this.data.datasets[0].data[i+1]
-      }
-      else{
-        this.data.datasets[0].data[i] = "null"
-      }
-    }
-    const chartInstance = this.$refs.myChart.chart
-    chartInstance.update();
 
   },
-  tempToString() {
-    if (this.isCel) {
-      return this.currentTemp + " \u{2103}"
-    }
-    else {
-      return ((this.currentTemp * 9 / 5) + 32) + " \u{2109}"
-    }
-  },
-  swapTemp() {
-    if (this.isCel) {
-      this.isCel = false
-      this.options.scales.y.max = 122
-      this.options.scales.y.min = 50
-      this.options.scales.y.title.text = 'Temp, \u{2109}'
-      this.options.scales.y.title.display = true
-      this.message = 'Switch to \u{2103}'
-      for (var i = 0; i < this.data.datasets[0].data.length; i++) {
-        // (0°C × 9/5) + 32
-        if (!isNaN(this.data.datasets[0].data[i])) {
-          this.data.datasets[0].data[i] = (this.data.datasets[0].data[i] * 9 / 5) + 32
-        }
-      }
-      this.componentKey += 1;
-    }
-    else {
-      this.isCel = true
-      this.options.scales.y.max = 50
-      this.options.scales.y.min = 10
-      this.options.scales.y.title.text = 'Temp, \u{2103}'
-      this.options.scales.y.title.display = true
-      this.message = 'Switch to \u{2109}'
-      for (var i = 0; i < this.data.datasets[0].data.length; i++) {
-        // (0°C × 9/5) + 32
-        if (!isNaN(this.data.datasets[0].data[i])) {
-          //(°F - 32) ÷ 9/5
-          this.data.datasets[0].data[i] = (this.data.datasets[0].data[i] - 32) / (9 / 5)
-        }
-      }
-      this.componentKey += 1;
-    }
-  }
-
-},
 };
 </script>
 
