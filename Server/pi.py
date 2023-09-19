@@ -30,7 +30,7 @@ class Pi:
         GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(self.button_pin, GPIO.BOTH, callback=self.button_interrupt, bouncetime=20)
         GPIO.setup(self.switch_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.add_event_detect(self.switch_pin, GPIO.BOTH, callback=self.switch_interrupt, bouncetime=500)
+        GPIO.add_event_detect(self.switch_pin, GPIO.BOTH, callback=self.switch_interrupt, bouncetime=50)
 
         if GPIO.input(self.switch_pin) == GPIO.LOW:
             self.switch_status = True
@@ -51,8 +51,8 @@ class Pi:
 
     def switch_interrupt(self, channel):
         print("Switch interrupt")
-
-        time.sleep(.05)
+        time.sleep(.01)
+        
         if GPIO.input(self.switch_pin) == GPIO.LOW:
             self.switch_status = True
             print("Setting To On")
