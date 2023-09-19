@@ -1,5 +1,6 @@
 from textMessage import send_message
 
+
 def temp_loop(pi):
     try:
         temperature = read_temperature(pi)
@@ -14,27 +15,26 @@ def temp_loop(pi):
     else:
         pi.temp_data.append(temperature)
         
-    
-    if pi.message_buffer == False:
-        if temperature > pi.max_temp:
-            print("SENDING MAX TEMP MESSAGE")
-            message = "MAX TEMP MESSAGE"
-            send_message(pi.phone_number, pi.carrier, message)
-            pi.message_buffer = True
-        elif temperature < pi.min_temp:
-            print("SENDING MIN TEMP MESSAGE")
-            message = "MIN TEMP MESSAGE"
-            send_message(pi.phone_number, pi.carrier, message)
-            pi.message_buffer = True
-    elif pi.min_temp < temperature < pi.max_temp:
-        print("RESET MESSAGE BUFFER")
-        pi.message_buffer = False
+        if pi.message_buffer == False:
+            if temperature > pi.max_temp:
+                print("SENDING MAX TEMP MESSAGE")
+                message = "MAX TEMP MESSAGE"
+                send_message(pi.phone_number, pi.carrier, message)
+                pi.message_buffer = True
+            elif temperature < pi.min_temp:
+                print("SENDING MIN TEMP MESSAGE")
+                message = "MIN TEMP MESSAGE"
+                send_message(pi.phone_number, pi.carrier, message)
+                pi.message_buffer = True
+        elif pi.min_temp < temperature < pi.max_temp:
+            print("RESET MESSAGE BUFFER")
+            pi.message_buffer = False
 
-    print("Temperature: " + str(temperature) + " °C")
-    print("Length of Queue: " + str(len(pi.temp_data)))
-    print("Switch Status: " + str(pi.switch_status))
-    print("Button Status PHYS: " + str(pi.button_status_phys))
-    print("Button Status COMP: " + str(pi.button_status_comp))
+        print("Temperature: " + str(round(temperature, 2)) + " °C")
+        print("Length of Queue: " + str(len(pi.temp_data)))
+        print("Switch Status: " + str(pi.switch_status))
+        print("Button Status PHYS: " + str(pi.button_status_phys))
+        print("Button Status COMP: " + str(pi.button_status_comp))
 
 
 def read_temperature(pi):
@@ -53,4 +53,3 @@ def read_temperature(pi):
 
     except Exception as e:
         print(f"An error occurred: {str(e)}")
-        return None

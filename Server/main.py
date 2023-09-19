@@ -1,86 +1,128 @@
 import threading
-import time
-from datetime import datetime
+import json
+from flask import *
 
-import RPi.GPIO as GPIO
 
-from apis import app, ButtonAPI, TemperatureAPI
-from thermometer import temp_loop
 from lcd import *
+from pi import Pi
 
 
-class Pi:
-    def __init__(self, ip, port, button_pin, sensor_id):
-        self.ip = ip
-        self.port = port
-        self.lcd = LCD()
-        self.temp_data = ["null"] * 300
-        self.switch_status = True
-        self.button_status_phys = False
-        self.button_status_comp = False
-        self.button_pin = button_pin
-        self.sensor_id = sensor_id
+app = Flask(__name__)
+pi = Pi("172.23.49.73", 5000, 17, 23, '28-3ce0e381d163')
 
-        self.message_buffer = False
-        self.phone_number = None
-        self.carrier = None
-        self.min_temp = 10
-        self.max_temp = 50
 
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.add_event_detect(self.button_pin, GPIO.BOTH, callback=self.button_interrupt, bouncetime=20)
-
-    def button_interrupt(self, channel):
-        print("Button Interrupt!")
-        time.sleep(.01)
-
-        # Wait for the button to be released
-        if GPIO.input(self.button_pin) == GPIO.LOW:
-            print("LOW")
-            self.button_status_phys = True
-        elif GPIO.input(self.button_pin) == GPIO.HIGH:
-            print("HIGH")
-            self.button_status_phys = False
-
-    def run_temp_loop(self):
-        while True:
-            a = datetime.now()
-            temp_loop(self)
-            try:
-                time.sleep(1 - (datetime.now() - a).total_seconds())
-            except:
-                pass
-
-    def lcd_loop(self):
-        if self.switch_status:
-            if self.button_status_phys or self.button_status_comp:
-                # turn on LCD
-                # display temp
-                self.lcd.LCD_BACKLIGHT = 0x08
-                self.lcd.message("Temperature", 1)
-                self.lcd.message(f"{self.temp_data[-1]}", 2)
-            else:
-                # turn off LCD
-                self.lcd.LCD_BACKLIGHT = 0x00
-                self.lcd.clear()
-                
+@app.route('/button/<status>', methods=['POST'])
+def post_button(status: bool):
+    try:
+        if status == "True":
+            status = True
+        elif status == "False":
+            status = False
         else:
-            # turn off LCD
-            self.lcd.LCD_BACKLIGHT = 0x00
-            self.lcd.clear()
+            resp = app.response_class(
+                response="Invalid parameters",
+                status=400,
+                headers=[('Access-Control-Allow-Origin', '*')],
+            )
+            return resp
+        pi.button_status_comp = status
+        resp = app.response_class(
+            response="Button status set to " + str(status),
+            status=200,
+            headers=[('Access-Control-Allow-Origin', '*')],
+        )
+        return resp
+    except Exception as e:
+        resp = app.response_class(
+            response="An error occurred: " + str(e),
+            status=500,
+            headers=[('Access-Control-Allow-Origin', '*')],
+        )
+        return resp
 
-    def run_lcd_loop(self):
-        while True:
-            self.lcd_loop()
+
+@app.route('/settings', methods=['POST'])
+def post_settings():
+    try:
+        req = request.get_data()
+        json_data = json.loads(req.decode('utf8').replace("'", '"'))
+        
+        if json_data["phone_number"] is not None and json_data["carrier"] is not None and json_data["max_temp"] is not None and \
+                json_data["min_temp"] is not None:
+            pi.phone_number = str(json_data["phone_number"])
+            pi.carrier = json_data["carrier"]
+            pi.max_temp = int(json_data["max_temp"])
+            pi.min_temp = int(json_data["min_temp"])
+            resp = app.response_class(
+                response=f"Successfully Set:\n\
+                    \tPhone Number = {pi.phone_number}\n\
+                    \tCarrier = {pi.carrier}\n\
+                    \tMax Temp = {pi.max_temp}\n\
+                    \tMin Temp = {pi.min_temp}",
+                status=200,
+                headers=[('Access-Control-Allow-Origin', '*')],
+            )
+            return resp
+        else:
+            resp = app.response_class(
+                response="Invalid parameters",
+                status=400,
+                headers=[('Access-Control-Allow-Origin', '*')],
+            )
+            return resp
+    except Exception as e:
+        resp = app.response_class(
+            response="An error occurred: " + str(e),
+            status=500,
+            headers=[('Access-Control-Allow-Origin', '*')],
+        )
+        return resp
+
+
+@app.route('/settings', methods=['GET'])
+def get_settings():
+    try:
+        payload = {
+                "phone_number": pi.phone_number,
+                "carrier": pi.carrier,
+                "max_temp": pi.max_temp,
+                "min_temp": pi.min_temp,
+            }
+        resp = app.response_class(
+            response=json.dumps(payload),
+            status=200,
+            headers=[('Access-Control-Allow-Origin', '*'),
+                     ('Content_Type','application/json')],
+        )
+        return resp
+    except Exception as e:
+        resp = app.response_class(
+            response="An error occurred: " + str(e),
+            status=500,
+            headers=[('Access-Control-Allow-Origin', '*')],
+        )
+        return resp
+
+
+@app.route('/temp', methods=['GET'])
+def get_temp():
+    if pi.switch_status:
+        resp = app.response_class(
+            response=json.dumps(pi.temp_data),
+            status=200,
+            headers=[('Access-Control-Allow-Origin', '*')],
+        )
+        return resp
+    else:
+        resp = app.response_class(
+            response="Switch is off",
+            status=409,
+            headers=[('Access-Control-Allow-Origin', '*')],
+        )
+        return resp
 
 
 def main():
-    pi = Pi("172.23.49.73", 5000, 17, '28-3ce0e381d163')
-
-    app.add_url_rule('/data', view_func=TemperatureAPI.as_view('data', pi=pi))
-    app.add_url_rule('/button/<status>', view_func=ButtonAPI.as_view('button', pi=pi))
-
     temp_thread = threading.Thread(target=pi.run_temp_loop)
     temp_thread.daemon = True
     temp_thread.start()
@@ -89,10 +131,7 @@ def main():
     lcd_thread.daemon = True
     lcd_thread.start()
 
-    TemperatureAPI(pi)
-    ButtonAPI(pi)
-
-    app.run(port=pi.port, host=pi.ip)
+    app.run(port=pi.port, host=pi.ip, threaded=True)
 
 
 if __name__ == "__main__":

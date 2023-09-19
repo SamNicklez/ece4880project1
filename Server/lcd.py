@@ -2,7 +2,7 @@ import smbus
 import time
 
 class LCD:
-    def __init__(self, pi_rev = 2, i2c_addr = 0x27, backlight = True):
+    def __init__(self, pi_rev: int = 2, i2c_addr: int = 0x27, backlight: bool = True):
 
         # device constants
         self.I2C_ADDR  = i2c_addr
@@ -44,8 +44,12 @@ class LCD:
         self.lcd_byte(0x0C, self.LCD_CMD) # 001100 Display On,Cursor Off, Blink Off
         self.lcd_byte(0x28, self.LCD_CMD) # 101000 Data length, number of lines, font size
         self.lcd_byte(0x01, self.LCD_CMD) # 000001 Clear display
+        
+        # turn off LCD
+        self.LCD_BACKLIGHT = 0x00
+        self.clear()
 
-    def lcd_byte(self, bits, mode):
+    def lcd_byte(self, bits: int, mode: int):
         # Send byte to data pins
         # bits = data
         # mode = 1 for data, 0 for command
@@ -61,14 +65,14 @@ class LCD:
         self.bus.write_byte(self.I2C_ADDR, bits_low)
         self.toggle_enable(bits_low)
 
-    def toggle_enable(self, bits):
+    def toggle_enable(self, bits: int):
         time.sleep(self.E_DELAY)
         self.bus.write_byte(self.I2C_ADDR, (bits | self.ENABLE))
         time.sleep(self.E_PULSE)
         self.bus.write_byte(self.I2C_ADDR,(bits & ~self.ENABLE))
         time.sleep(self.E_DELAY)
 
-    def message(self, string, line = 1):
+    def message(self, string: str, line: int = 1):
         # display message string on LCD line 1 or 2
         if line == 1:
             lcd_line = self.LCD_LINE_1
