@@ -1,4 +1,5 @@
 import json
+from json import JSONDecodeError
 import pytest
 
 import sys
@@ -201,14 +202,20 @@ def test_return_response(message, status):
     assert actual.status_code == status
 
 
+test_input = [
+    (Exception("Exception"), "Exception"),
+    (TypeError("TypeError"), "TypeError"),
+    (MemoryError("MemoryError"), "MemoryError"),
+    (SyntaxError("SyntaxError"), "SyntaxError"),
+]
+
 # Test for return_error function
-def test_return_error():
-    exception = Exception("mock exception")
+@pytest.mark.parametrize("exception,expected", test_input)
+def test_return_error(exception, expected):
     actual = return_error(exception)
     
-    assert actual.get_data().decode('utf8').replace("'", '"') == "An error occurred: mock exception"
+    assert actual.get_data().decode('utf8').replace("'", '"') == f"An error occurred: {expected}"
     assert actual.status_code == 500
-    
 
 
 if __name__ == "__main__":

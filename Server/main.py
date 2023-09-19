@@ -31,8 +31,8 @@ def post_button(status: bool):
 @app.route('/settings', methods=['POST'])
 def post_settings():
     try:
-        req = request.get_data()
-        json_data = json.loads(req.decode('utf8').replace("'", '"'))
+        data = request.get_data()
+        json_data = json.loads(data.decode('utf8').replace("'", '"'))
         
         if json_data["phone_number"] is not None and json_data["carrier"] is not None and json_data["max_temp"] is not None and \
                 json_data["min_temp"] is not None:
