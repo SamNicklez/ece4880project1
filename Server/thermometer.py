@@ -1,5 +1,6 @@
 from textMessage import send_message
 
+
 def temp_loop(pi):
     try:
         temperature = read_temperature(pi)
@@ -29,7 +30,7 @@ def temp_loop(pi):
             print("RESET MESSAGE BUFFER")
             pi.message_buffer = False
 
-        print("Temperature: " + str(temperature) + " °C")
+        print("Temperature: " + str(round(temperature, 2)) + " °C")
         print("Length of Queue: " + str(len(pi.temp_data)))
         print("Switch Status: " + str(pi.switch_status))
         print("Button Status PHYS: " + str(pi.button_status_phys))

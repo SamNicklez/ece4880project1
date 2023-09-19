@@ -8,7 +8,7 @@ from pi import Pi
 
 
 app = Flask(__name__)
-pi = Pi("172.23.49.73", 5000, 17, '28-3ce0e381d163')
+pi = Pi("172.23.49.73", 5000, 17, 23, '28-3ce0e381d163')
 
 
 @app.route('/button/<status>', methods=['POST'])

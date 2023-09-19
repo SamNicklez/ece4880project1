@@ -11,7 +11,7 @@ CARRIERS = {
 EMAIL = "lukefarmer6801@gmail.com"  # Replace with your Gmail email
 PASSWORD = "rwvrxfqqvcykrskr"  # Replace with your Gmail password
  
-def send_message(phone_number, carrier, message):
+def send_message(phone_number: int, carrier: str, message: str):
     recipient = phone_number + CARRIERS[carrier]
     auth = (EMAIL, PASSWORD)
  
