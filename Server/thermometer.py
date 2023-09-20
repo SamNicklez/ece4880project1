@@ -14,8 +14,8 @@ def temp_loop(pi):
         pi.temp_data.append("null")
     else:
         pi.temp_data.append(temperature)
-        
-        if pi.message_buffer == False:
+
+        if not pi.message_buffer:
             if temperature > pi.max_temp:
                 print("SENDING MAX TEMP MESSAGE")
                 message = "MAX TEMP MESSAGE"
@@ -42,7 +42,7 @@ def read_temperature(pi):
         # Read the raw temperature data from the sensor
         with open(f"/sys/bus/w1/devices/{pi.sensor_id}/w1_slave", "r") as sensor_file:
             lines = sensor_file.readlines()
-            
+
         # Extract the temperature from the second line of the output
         if len(lines) == 0:
             return None

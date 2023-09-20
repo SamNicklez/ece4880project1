@@ -1,13 +1,11 @@
-import threading
 import json
 import re
+import threading
+
 from flask import *
 
-
-from lcd import *
 from pi import Pi
 from textMessage import CARRIERS
-
 
 app = Flask(__name__)
 pi = Pi("172.23.49.73", 5000, 17, 23, '28-3ce0e381d163')
@@ -33,8 +31,9 @@ def post_settings():
     try:
         data = request.get_data()
         json_data = json.loads(data.decode('utf8').replace("'", '"'))
-        
-        if json_data["phone_number"] is not None and json_data["carrier"] is not None and json_data["max_temp"] is not None and \
+
+        if json_data["phone_number"] is not None and json_data["carrier"] is not None and json_data[
+            "max_temp"] is not None and \
                 json_data["min_temp"] is not None:
             if int(json_data["min_temp"]) > int(json_data["max_temp"]):
                 return return_response("Input min_temp > max_temp", 400)
@@ -59,12 +58,12 @@ def post_settings():
 def get_settings():
     try:
         payload = {
-                "phone_number": pi.phone_number,
-                "carrier": pi.carrier,
-                "max_temp": pi.max_temp,
-                "min_temp": pi.min_temp,
-            }
-        return return_response(json.dumps(payload),200)
+            "phone_number": pi.phone_number,
+            "carrier": pi.carrier,
+            "max_temp": pi.max_temp,
+            "min_temp": pi.min_temp,
+        }
+        return return_response(json.dumps(payload), 200)
     except Exception as e:
         return return_error(e)
 
@@ -76,6 +75,7 @@ def get_temp():
     else:
         return return_response("Switch is off", 403)
 
+
 def return_response(response: str, status):
     resp = app.response_class(
         response=response,
@@ -83,6 +83,7 @@ def return_response(response: str, status):
         headers=[('Access-Control-Allow-Origin', '*')],
     )
     return resp
+
 
 def return_error(e: Exception):
     resp = app.response_class(

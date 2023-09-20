@@ -1,9 +1,8 @@
 import json
-from json import JSONDecodeError
-import pytest
-
-import sys
 import os
+import sys
+
+import pytest
 
 sys.path.append(os.path.abspath(".."))
 sys.path.append(os.path.abspath("../Server"))
@@ -16,7 +15,8 @@ from Server.main import app, return_response, return_error
 def client():
     with app.test_client() as client:
         yield client
-        
+
+
 # Mock the Pi object
 @pytest.fixture
 def mock_pi(mocker):
@@ -94,7 +94,7 @@ test_input = [
 # Test for invalid inputs POST /settings
 @pytest.mark.parametrize("phone_number,carrier,max_temp,min_temp,expected", test_input)
 def test_post_settings_invalid_inputs(
-    client, phone_number, carrier, max_temp, min_temp, expected
+        client, phone_number, carrier, max_temp, min_temp, expected
 ):
     payload = {
         "phone_number": phone_number,
@@ -124,7 +124,7 @@ test_input = [
         "phone_number": 1234567890,
         "carrier": "att",
         "min_temp": 0,
-    }   ),
+    }),
     ({
         "phone_number": 1234567890,
         "carrier": "att",
@@ -132,14 +132,16 @@ test_input = [
     }),
 ]
 
+
 # Test for invalid request POST /settings
 @pytest.mark.parametrize("payload", test_input)
-def test_post_settings_invalid_request(client, payload):    
+def test_post_settings_invalid_request(client, payload):
     response = client.post(
         "/settings", data=json.dumps(payload), headers={"Content-Type": "text/plain"}
     )
     assert response.status_code == 500
-    
+
+
 # Test for GET /settings
 def test_get_settings(client):
     payload = {
@@ -149,7 +151,7 @@ def test_get_settings(client):
         "min_temp": -123,
     }
     client.post("/settings", data=json.dumps(payload), headers={"Content-Type": "text/plain"})
-    
+
     response = client.get("/settings")
     json_data = json.loads(response.get_data().decode('utf8').replace("'", '"'))
     assert json_data["phone_number"] == "1234567890"
@@ -158,6 +160,7 @@ def test_get_settings(client):
     assert json_data["min_temp"] == -123
     assert response.status_code == 200
 
+
 test_input = [
     ([123], [123]),
     ([123, 456, 789], [123, 456, 789]),
@@ -165,22 +168,23 @@ test_input = [
     (["null", 123, "null", 456], ["null", 123, "null", 456]),
 ]
 
+
 # Test for GET /temp
 @pytest.mark.parametrize("temp_data,expected", test_input)
 def test_get_temp(client, mocker, mock_pi, temp_data, expected):
     mock_pi.switch_status = True
     mock_pi.temp_data = temp_data
-    
+
     response = client.get("/temp")
     json_data = json.loads(response.get_data().decode('utf8').replace("'", '"'))
     assert json_data == expected
     assert response.status_code == 200
-    
+
 
 # Test for GET /temp when switch is off
 def test_get_temp_switch_off(client, mocker, mock_pi):
     mock_pi.switch_status = False
-    
+
     response = client.get("/temp")
     assert response.data.decode("utf8").replace("'", '"') == "Switch is off"
     assert response.status_code == 403
@@ -193,11 +197,12 @@ test_input = [
     ("mock response", 403),
 ]
 
+
 # Test for return_response function
 @pytest.mark.parametrize("message,status", test_input)
 def test_return_response(message, status):
     actual = return_response(message, status)
-    
+
     assert actual.get_data().decode('utf8').replace("'", '"') == message
     assert actual.status_code == status
 
@@ -209,11 +214,12 @@ test_input = [
     (SyntaxError("SyntaxError"), "SyntaxError"),
 ]
 
+
 # Test for return_error function
 @pytest.mark.parametrize("exception,expected", test_input)
 def test_return_error(exception, expected):
     actual = return_error(exception)
-    
+
     assert actual.get_data().decode('utf8').replace("'", '"') == f"An error occurred: {expected}"
     assert actual.status_code == 500
 

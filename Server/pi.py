@@ -1,18 +1,18 @@
-import time
 from datetime import datetime
 
 import RPi.GPIO as GPIO
 
-from thermometer import temp_loop
 from lcd import *
+from thermometer import temp_loop
+
 
 class Pi:
-    def __init__(self, ip: int, port: int, button_pin: int, switch_pin: int, sensor_id: str):
-        self.ip: int = ip
+    def __init__(self, ip: str, port: int, button_pin: int, switch_pin: int, sensor_id: str):
+        self.ip: str = ip
         self.port: int = port
         self.lcd: LCD = LCD()
-        self.temp_data: list = ["null"] * 300
-        
+        self.temp_data: list[int | str] = ["null"] * 300
+
         self.switch_status: bool = True
         self.button_status_phys: bool = False
         self.button_status_comp: bool = False
@@ -21,8 +21,8 @@ class Pi:
         self.sensor_id: str = sensor_id
 
         self.message_buffer: bool = False
-        self.phone_number: int = None
-        self.carrier: str = None
+        self.phone_number: int | None = None
+        self.carrier: str | None = None
         self.min_temp: int = 10
         self.max_temp: int = 50
 
@@ -52,7 +52,7 @@ class Pi:
     def switch_interrupt(self, channel):
         print("Switch interrupt")
         time.sleep(.01)
-        
+
         if GPIO.input(self.switch_pin) == GPIO.LOW:
             self.switch_status = True
             print("Setting To On")
@@ -81,7 +81,7 @@ class Pi:
                 # turn off LCD
                 self.lcd.LCD_BACKLIGHT = 0x00
                 self.lcd.clear()
-                
+
         else:
             # turn off LCD
             self.lcd.LCD_BACKLIGHT = 0x00

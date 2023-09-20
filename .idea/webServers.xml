@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="c8a7c356-6437-4f8c-97d8-e56a1b8d2673" name="Senior Design PI">
+        <fileTransfer rootFolder="/home/admin/ece4880project1" accessType="SFTP" host="seniorDesign" port="22" sshConfigId="f73f9d68-f2d0-4ace-b772-c4c9fc1e12e6" sshConfig="admin@seniorDesign:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
