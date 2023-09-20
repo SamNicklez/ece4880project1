@@ -1,9 +1,13 @@
+import time
 from datetime import datetime
 
 import RPi.GPIO as GPIO
 
-from lcd import *
+from lcd import LCD
 from thermometer import temp_loop
+
+lcd_loop_flag = True
+temp_loop_flag = True
 
 
 class Pi:
@@ -61,12 +65,12 @@ class Pi:
             print("Setting Off")
 
     def run_temp_loop(self):
-        while True:
-            a = datetime.now()
+        while temp_loop_flag:
+            start_time = datetime.now()
             temp_loop(self)
             try:
-                time.sleep(1 - (datetime.now() - a).total_seconds())
-            except:
+                time.sleep(1 - (datetime.now() - start_time).total_seconds())
+            except Exception as e:
                 pass
 
     def lcd_loop(self):
@@ -76,17 +80,19 @@ class Pi:
                 # display temp
                 self.lcd.LCD_BACKLIGHT = 0x08
                 self.lcd.message("Temperature:", 1)
-                self.lcd.message(f"{round(self.temp_data[-1], 2)}ßC", 2)
+                if isinstance(self.temp_data[-1], int):
+                    self.lcd.message(f"{round(self.temp_data[-1], 2)}ßC", 2)
+                else:
+                    self.lcd.message("No Temp Data", 2)
             else:
                 # turn off LCD
                 self.lcd.LCD_BACKLIGHT = 0x00
                 self.lcd.clear()
-
         else:
             # turn off LCD
             self.lcd.LCD_BACKLIGHT = 0x00
             self.lcd.clear()
 
     def run_lcd_loop(self):
-        while True:
+        while lcd_loop_flag:
             self.lcd_loop()

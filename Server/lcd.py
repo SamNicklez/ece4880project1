@@ -91,5 +91,5 @@ class LCD:
             self.lcd_byte(ord(string[i]), self.LCD_CHR)
 
     def clear(self):
-        # clear LCD display
+        # clear LCD
         self.lcd_byte(0x01, self.LCD_CMD)
