@@ -1,11 +1,17 @@
 import json
 import os
 import sys
+from unittest.mock import patch, MagicMock
 
 import pytest
 
 sys.path.append(os.path.abspath(".."))
 sys.path.append(os.path.abspath("../Server"))
+
+sys.modules["smbus"] = MagicMock()
+sys.modules["smbus.SMBus"] = MagicMock()
+sys.modules["RPi"] = MagicMock()
+sys.modules["RPi.GPIO"] = MagicMock()
 
 from Server.main import app, return_response, return_error
 
@@ -15,14 +21,6 @@ from Server.main import app, return_response, return_error
 def client():
     with app.test_client() as client:
         yield client
-
-
-# Mock the Pi object
-@pytest.fixture
-def mock_pi(mocker):
-    mock = mocker.MagicMock()
-    mocker.patch('Server.main.pi', mock)
-    return mock
 
 
 # Test for valid POST /button/True
@@ -171,7 +169,8 @@ test_input = [
 
 # Test for GET /temp
 @pytest.mark.parametrize("temp_data,expected", test_input)
-def test_get_temp(client, mocker, mock_pi, temp_data, expected):
+@patch("Server.main.pi")
+def test_get_temp(mock_pi, client, temp_data, expected):
     mock_pi.switch_status = True
     mock_pi.temp_data = temp_data
 
@@ -182,7 +181,8 @@ def test_get_temp(client, mocker, mock_pi, temp_data, expected):
 
 
 # Test for GET /temp when switch is off
-def test_get_temp_switch_off(client, mocker, mock_pi):
+@patch("Server.main.pi")
+def test_get_temp_switch_off(mock_pi, client):
     mock_pi.switch_status = False
 
     response = client.get("/temp")
