@@ -8,6 +8,7 @@ import pytest
 sys.path.append(os.path.abspath(".."))
 sys.path.append(os.path.abspath("../Server"))
 
+# Mock smbus and gpio libraries for testing outside of Raspberry Pi
 sys.modules["smbus"] = MagicMock()
 sys.modules["smbus.SMBus"] = MagicMock()
 sys.modules["RPi"] = MagicMock()
@@ -69,7 +70,9 @@ def test_post_settings_valid(client, phone_number, carrier, max_temp, min_temp):
     expected = f"Successfully Set:\n\tPhone Number = {phone_number}\n\tCarrier = {carrier}\n\tMax Temp = {max_temp}\nTemp = {min_temp}"
 
     response = client.post(
-        "/settings", data=json.dumps(payload), headers={"Content-Type": "text/plain"}
+        "/settings",
+        data=json.dumps(payload),
+        headers={"Content-Type": "text/plain"}
     )
     assert response.data.decode("utf8").replace("'", '"') == expected
     assert response.status_code == 200
@@ -222,7 +225,3 @@ def test_return_error(exception, expected):
 
     assert actual.get_data().decode('utf8').replace("'", '"') == f"An error occurred: {expected}"
     assert actual.status_code == 500
-
-
-if __name__ == "__main__":
-    pytest.main()

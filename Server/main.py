@@ -11,6 +11,13 @@ app = Flask(__name__)
 pi = Pi("172.23.49.73", 5000, 17, 23, '28-3ce0e381d163')
 
 
+# POST /button/<status>
+# Input:
+#       - status: True or False
+# Response:
+#       - 200: Button status set to True/False
+#       - 400: Invalid Input Status
+# Set button_status_comp to input status
 @app.route('/button/<status>', methods=['POST'])
 def post_button(status: bool):
     try:
@@ -26,15 +33,29 @@ def post_button(status: bool):
         return return_error(e)
 
 
+# POST /settings
+# Inputs:
+#     - request body: {
+#           "phone_number": <phone_number>,
+#           "carrier": <carrier>,
+#           "max_temp": <max_temp>,
+#           "min_temp": <min_temp>
+#       }
+# Response:
+#       - 200: Success
+#       - 400: Input min_temp > max_temp, Invalid Carrier, Invalid Phone Number, Missing Input Parameters
+# Set the Pi's phone number, carrier, max_temp, and min_temp
 @app.route('/settings', methods=['POST'])
 def post_settings():
     try:
         data = request.get_data()
         json_data = json.loads(data.decode('utf8').replace("'", '"'))
 
+        # Check if all input parameters are present
         if json_data["phone_number"] is not None and json_data["carrier"] is not None and json_data[
             "max_temp"] is not None and \
                 json_data["min_temp"] is not None:
+            # Check min_temp < max_temp, carrier is valid, and phone number is valid
             if int(json_data["min_temp"]) > int(json_data["max_temp"]):
                 return return_response("Input min_temp > max_temp", 400)
             elif json_data["carrier"] not in CARRIERS.keys():
@@ -54,6 +75,10 @@ def post_settings():
         return return_error(e)
 
 
+# GET /settings
+# Response:
+#       - 200: Success
+# Get the Pi's phone number, carrier, max_temp, and min_temp
 @app.route('/settings', methods=['GET'])
 def get_settings():
     try:
@@ -68,14 +93,22 @@ def get_settings():
         return return_error(e)
 
 
+# GET /temp
+# Response:
+#       - 200: Success
+#       - 403: Switch is off
+# Get the Pi's temperature data
 @app.route('/temp', methods=['GET'])
 def get_temp():
+    # Only send temperature data if switch is on
     if pi.switch_status:
         return return_response(json.dumps(pi.temp_data), 200)
     else:
         return return_response("Switch is off", 403)
 
 
+# Function return_response takes in a response message
+# and a status code and returns a Flask response object
 def return_response(response: str, status):
     resp = app.response_class(
         response=response,
@@ -85,6 +118,8 @@ def return_response(response: str, status):
     return resp
 
 
+# Function return_error takes in an exception and returns
+# a Flask response object
 def return_error(e: Exception):
     resp = app.response_class(
         response="An error occurred: " + str(e),
@@ -94,15 +129,21 @@ def return_error(e: Exception):
     return resp
 
 
+# Main function
+# Creates two threads for the Pi's continuous temperature and LCD loops
+# Runs the Flask app
 def main():
+    # Thread for continuous temperature loop
     temp_thread = threading.Thread(target=pi.run_temp_loop)
     temp_thread.daemon = True
     temp_thread.start()
 
+    # Thread for continuous LCD loop
     lcd_thread = threading.Thread(target=pi.run_lcd_loop)
     lcd_thread.daemon = True
     lcd_thread.start()
 
+    # Start Flask app
     app.run(port=pi.port, host=pi.ip, threaded=True, debug=False)
 
 

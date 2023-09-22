@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
+# Mock smbus and gpio libraries for testing outside of Raspberry Pi
 sys.modules["smbus"] = MagicMock()
 sys.modules["smbus.SMBus"] = MagicMock()
 sys.modules["RPi"] = MagicMock()
@@ -22,6 +23,7 @@ from Server.pi import Pi
 from Server.lcd import LCD
 
 
+# Test for Pi class constructor
 def test_pi_init():
     pi = Pi("mock_ip", 1234, 1, 2, "mock_id")
     assert pi.ip == "mock_ip"
@@ -43,6 +45,7 @@ def test_pi_init():
     assert pi.max_temp == 50
 
 
+# Test for button_interrupt function
 @patch("Server.pi.GPIO.LOW", True)
 @patch("Server.pi.GPIO.HIGH", False)
 @patch("Server.pi.GPIO.input")
@@ -64,6 +67,7 @@ def test_button_interrupt(mock_input):
     assert time.sleep.call_count == 2
 
 
+# Test for button_interrupt function
 @patch("Server.pi.GPIO.LOW", True)
 @patch("Server.pi.GPIO.HIGH", False)
 @patch("Server.pi.GPIO.input")
@@ -98,6 +102,7 @@ test_input = [
 ]
 
 
+# Test for lcd_loop function
 @pytest.mark.parametrize("switch,button_phys,button_comp,temp_data,expected", test_input)
 def test_pi_lcd_loop(switch, button_phys, button_comp, temp_data, expected):
     pi = Pi("mock_ip", 1234, 1, 2, "mock_id")
