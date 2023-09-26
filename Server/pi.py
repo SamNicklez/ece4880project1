@@ -80,7 +80,8 @@ class Pi:
                 # display temp
                 self.lcd.LCD_BACKLIGHT = 0x08
                 self.lcd.message("Temperature:", 1)
-                if isinstance(self.temp_data[-1], int):
+                #print("BEFORE LCD LOOP: " + f"{round(self.temp_data[-1], 2)}ßC")
+                if isinstance(self.temp_data[-1], float):
                     self.lcd.message(f"{round(self.temp_data[-1], 2)}ßC", 2)
                 else:
                     self.lcd.message("No Temp Data", 2)
