@@ -31,7 +31,6 @@ export default {
       componentKey: 0,
       fetchData: null,
       compatConfig: { MODE: 3 },
-      loaded: false,
       modalEnable: false,
       carrier: "att",
       carrier2: null,
@@ -51,7 +50,7 @@ export default {
         ]
       },
       options: {
-        responsive: true,
+        //responsive: true,
         maintainAspectRatio: true,
         type: 'linear',
         bezierCurve: true,
@@ -103,22 +102,48 @@ export default {
     async grabLast300() {
       while (true) {
         const startTime = performance.now(); // Get the start time
-        fetch('http://172.23.49.73:5000/data')
+        const controller = new AbortController()
+        // 1 second timeout:
+        const timeoutId = setTimeout(() => controller.abort(), 1000)
+        fetch('http://172.23.49.73:5000/temp',{ signal: controller.signal })
           .then(res => res.json())
           .then(data => {
+            // this.fetchData = data.split(',')
             this.fetchData = data;
           })
           .then(() => {
-            this.currentTemp = this.fetchData[299]
+            if (this.fetchData[299] == null) {
+              this.currentTemp = 'unplugged sensor'
+            }
+            else {
+              this.currentTemp = this.fetchData[299]
+            }
           }).catch((error) => {
-            console.log(error)
+            //this function is used for if the chart fetch fails
+            //console.log(error)
+            if (this.fetchData != null) {
+              for (var i = 0; i < 300; i++) {
+                if (i < 299) {
+                  this.fetchData[i] = this.fetchData[i + 1]
+                }
+                else {
+                  this.fetchData[i] = "null"
+                }
+                this.currentTemp = 'no data available'
+              }
+              this.$refs.myChart.chart.update('none')
+            }
+            else {
+              this.currentTemp = 'no data available'
+            }
+
           });
         const endTime = performance.now(); // Get the end time
         const executionTime = endTime - startTime; // Calculate the execution time in milliseconds
 
         // Calculate the sleep duration based on the execution time
-        const sleepDuration = Math.max(0, 1000 - executionTime); // Ensure a minimum sleep of 0 milliseconds
 
+        const sleepDuration = Math.max(0, 1000 - executionTime); // Ensure a minimum sleep of 0 milliseconds
         await new Promise(resolve => setTimeout(resolve, sleepDuration)); // Sleep for the calculated duration
       }
     },
@@ -126,7 +151,6 @@ export default {
      * updates the graph with the most current data available
      */
     updateData() {
-      //this.loaded = false
       this.data.labels = []
       this.data.datasets[0].data = []
       for (var i = 0; i < 300; i++) {
@@ -149,44 +173,36 @@ export default {
         }
       }
       if (this.fetchData != null) {
-        //this.loaded = true;
         var list = this.fetchData
-        //console.log(this.$refs.myChart.chart.data.datasets[0].data)
-        if (this.isCel) {
+        if (!this.isCel) {
           for (var i = 0; i < 300; i++) {
             list[i] = (list[i] * 9 / 5) + 32
           }
         }
-        this.$refs.myChart.chart.data.datasets[0].data = list
-        this.$refs.myChart.chart.update('none')
-      }
-    },
-    /**
-     * Handles errors if server is down
-     * @param {*} error 
-     */
-    fetchError(error) {
-      console.log(error)
-      //this function is used for if the chart fetch fails
-      for (var i = 0; i < 300; i++) {
-        if (i < 299) {
-          this.data.datasets[0].data[i] = this.data.datasets[0].data[i + 1]
+        try {
+          this.$refs.myChart.chart.data.datasets[0].data = list
+          this.$refs.myChart.chart.update('none')
         }
-        else {
-          this.data.datasets[0].data[i] = "null"
+        catch (error) {
+          console.log(error)
         }
-        this.currentTemp = 'no data available'
       }
     },
     /**
      * Converts the current temperture to a string to display to the user
      */
     tempToString() {
+      if (this.currentTemp == 'no data available' || this.currentTemp == 'unplugged sensor' || typeof this.currentTemp !== 'number' || this.currentTemp == null) {
+        if (this.currentTemp == null) {
+          return "no data available"
+        }
+        return this.currentTemp
+      }
       if (this.isCel) {
-        return this.currentTemp + " \u{2103}"
+        return this.currentTemp.toFixed(2) + " \u{2103}"
       }
       else {
-        return ((this.currentTemp * 9 / 5) + 32) + " \u{2109}"
+        return ((this.currentTemp * 9 / 5) + 32).toFixed(2) + " \u{2109}"
       }
     },
     /**
@@ -236,40 +252,80 @@ export default {
         // If it's valid, remove any non-digit characters and format it
         const formattedNumber = this.phoneNumber.replace(/\D/g, "");
         this.phoneNumber = formattedNumber
-      } 
+      }
       else {
         // If it's not valid, return null or any other appropriate value
         alert("Please enter a valid phone number");
         this.phoneNumber = ""
         return
       }
-      if((!isNaN(lowTem) && typeof lowTem === 'number') && ((!isNaN(highTem) && typeof highTem === 'number'))){
-        if(lowTem < highTem){
+      if ((!isNaN(lowTem) && typeof lowTem === 'number') && ((!isNaN(highTem) && typeof highTem === 'number'))) {
+        if (lowTem < highTem) {
           this.lowerTemp = lowTem
           this.upperTemp = highTem
-          //DO API CALL HERE
-
-
-
-
-
-
-
+          var myHeaders = new Headers();
+          myHeaders.append("Content-Type", "text/plain");
+          var raw = JSON.stringify({
+            "phone_number": this.phoneNumber,
+            "carrier": this.carrier,
+            "max_temp": this.upperTemp,
+            "min_temp": this.lowerTemp
+          });
+          var requestOptions = {
+            method: 'POST',
+            headers: myHeaders,
+            body: raw,
+            redirect: 'follow'
+          };
+          fetch("http://172.23.49.73:5000/settings", requestOptions)
+            .then(response => response.text())
+            .then(result => console.log(result))
+            .catch(error => console.log('error', error));
         }
-        else if(lowTem == highTem){
+        else if (lowTem == highTem) {
           alert("Lower tempature and upper temperature cannot be equal");
           return
         }
-        else{
+        else {
           alert("Lower tempature cannot be a larger value than the upper temperature");
           return
         }
       }
-      else{
+      else {
         alert("Please enter a valid temperature");
         return
       }
       this.modalEnable = false;
+    },
+    toggleBoxButton(boolVal) {
+      if (boolVal) {
+        var raw = "";
+
+        var requestOptions = {
+          method: 'POST',
+          body: raw,
+          redirect: 'follow'
+        };
+
+        fetch("http://172.23.49.73:5000/button/True", requestOptions)
+          .then(response => response.text())
+          .then(result => console.log(result))
+          .catch(error => console.log('error', error));
+      }
+      else {
+        var raw = "";
+
+        var requestOptions = {
+          method: 'POST',
+          body: raw,
+          redirect: 'follow'
+        };
+
+        fetch("http://172.23.49.73:5000/button/False", requestOptions)
+          .then(response => response.text())
+          .then(result => console.log(result))
+          .catch(error => console.log('error', error));
+      }
     }
 
   },
@@ -278,7 +334,7 @@ export default {
 <template>
   <div style="min-width: 100vw; min-height: 100vh; background-color: white; position: relative; left:0; top:0;">
     <div style="min-width: 95vw; min-height: 80vh; align-items: center; padding-top: 20vh;">
-      <h1 size="+2" style="margin-left: 2.5vw;">Current Temperature: {{ tempToString() }}</h1>
+      <h1 size="+2" style="margin-left: 2.5vw; margin-bottom: 1vh;">Current Temperature: {{ tempToString() }}</h1>
       <v-btn style="margin-left: 2.5vw;" @mousedown="toggleBoxButton(true)" @mouseup="toggleBoxButton(false)">Turn on box
         display</v-btn>
       <v-btn style="margin-left: 2.5vw;" v-on:click="swapTemp()">{{ this.message }}</v-btn>
@@ -286,7 +342,7 @@ export default {
         <b>Settings</b>
       </v-btn>
       <Line ref="myChart" :key="componentKey" :data="this.data" :options="this.options"
-        style="position: absolute; height:40vh; width:80vw; padding-right: 10vw;" />
+        style="position: absolute; height:40vh; width:80vw;" />
     </div>
   </div>
   <v-dialog v-model="modalEnable" persistent max-width="40vw">
@@ -307,4 +363,6 @@ export default {
     </v-card>
   </v-dialog>
 </template>
-<style scoped>/* add css if needed */</style>
+<style scoped>
+/* add css if needed */
+</style>
