@@ -37,6 +37,8 @@ export default {
       upperTemp: 50,
       lowerTemp: 10,
       phoneNumber: '3193335747',
+      dataGrabbed: true,
+      errorBool: true,
       data: {
         labels: [],
         datasets: [
@@ -69,7 +71,7 @@ export default {
             },
             title: {
               display: true,
-              text: 'Seconds Ago'
+              text: 'Seconds Ago from the Current Time'
             }
           },
           y: {
@@ -103,16 +105,30 @@ export default {
       while (true) {
         const startTime = performance.now(); // Get the start time
         const controller = new AbortController()
+        if (this.dataGrabbed) {
+          fetch('http://172.23.49.73:5000/settings')
+            .then(res => res.json())
+            .then(data => {
+              this.carrier = data['carrier']
+              this.upperTemp = data['max_temp']
+              this.lowerTemp = data['min_temp']
+              this.phoneNumber = data['phone_number']
+              this.dataGrabbed = false
+            }).catch((error) => {
+              console.log(error)
+            });
+        }
         // 1 second timeout:
         const timeoutId = setTimeout(() => controller.abort(), 1000)
-        fetch('http://172.23.49.73:5000/temp',{ signal: controller.signal })
+        fetch('http://172.23.49.73:5000/temp', { signal: controller.signal })
           .then(res => res.json())
           .then(data => {
             // this.fetchData = data.split(',')
             this.fetchData = data;
+            this.errorBool = true;
           })
           .then(() => {
-            if (this.fetchData[299] == null) {
+            if (this.fetchData[299] == null || this.fetchData[299] == 'null') {
               this.currentTemp = 'unplugged sensor'
             }
             else {
@@ -120,7 +136,6 @@ export default {
             }
           }).catch((error) => {
             //this function is used for if the chart fetch fails
-            //console.log(error)
             if (this.fetchData != null) {
               for (var i = 0; i < 300; i++) {
                 if (i < 299) {
@@ -129,6 +144,7 @@ export default {
                 else {
                   this.fetchData[i] = "null"
                 }
+                this.errorBool = false;
                 this.currentTemp = 'no data available'
               }
               this.$refs.myChart.chart.update('none')
@@ -136,7 +152,6 @@ export default {
             else {
               this.currentTemp = 'no data available'
             }
-
           });
         const endTime = performance.now(); // Get the end time
         const executionTime = endTime - startTime; // Calculate the execution time in milliseconds
@@ -174,7 +189,7 @@ export default {
       }
       if (this.fetchData != null) {
         var list = this.fetchData
-        if (!this.isCel) {
+        if (!this.isCel && this.errorBool) {
           for (var i = 0; i < 300; i++) {
             list[i] = (list[i] * 9 / 5) + 32
           }
@@ -216,10 +231,20 @@ export default {
         this.options.scales.y.title.text = 'Temp, \u{2109}'
         this.options.scales.y.title.display = true
         this.message = 'Switch to \u{2103}'
-        for (var i = 0; i < this.data.datasets[0].data.length; i++) {
-          // (0°C × 9/5) + 32
-          if (!isNaN(this.data.datasets[0].data[i])) {
-            this.data.datasets[0].data[i] = (this.data.datasets[0].data[i] * 9 / 5) + 32
+        if (this.fetchData != null) {
+          console.log('hit')
+          var list = this.fetchData
+          if (!this.isCel) {
+            for (var i = 0; i < 300; i++) {
+              list[i] = (list[i] * 9 / 5) + 32
+            }
+          }
+          try {
+            this.$refs.myChart.chart.data.datasets[0].data = list
+            this.$refs.myChart.chart.update('none')
+          }
+          catch (error) {
+            console.log(error)
           }
         }
         this.componentKey += 1;
@@ -231,11 +256,20 @@ export default {
         this.options.scales.y.title.text = 'Temp, \u{2103}'
         this.options.scales.y.title.display = true
         this.message = 'Switch to \u{2109}'
-        for (var i = 0; i < this.data.datasets[0].data.length; i++) {
-          // (0°C × 9/5) + 32
-          if (!isNaN(this.data.datasets[0].data[i])) {
-            //(°F - 32) ÷ 9/5
-            this.data.datasets[0].data[i] = (this.data.datasets[0].data[i] - 32) / (9 / 5)
+        if (this.fetchData != null) {
+          var list = this.fetchData
+          if (this.isCel) {
+            for (var i = 0; i < 300; i++) {
+              //(32°F − 32) × 5/9
+              list[i] = (list[i] - 32) / (9 / 5)
+            }
+          }
+          try {
+            this.$refs.myChart.chart.data.datasets[0].data = list
+            this.$refs.myChart.chart.update('none')
+          }
+          catch (error) {
+            console.log(error)
           }
         }
         this.componentKey += 1;
