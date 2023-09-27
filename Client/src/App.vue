@@ -25,24 +25,24 @@ export default {
   },
   data() {
     return {
-      currentTemp: -1,
-      message: 'Switch to \u{2109}',
-      isCel: true,
-      componentKey: 0,
-      fetchData: null,
-      compatConfig: { MODE: 3 },
-      modalEnable: false,
-      carrier: "att",
-      carrier2: null,
-      upperTemp: 50,
-      lowerTemp: 10,
-      phoneNumber: '3193335747',
-      dataGrabbed: true,
-      errorBool: true,
+      currentTemp: -1, //Stores current temperature on webapp
+      message: 'Switch to \u{2109}', //Stores button text
+      isCel: true, //If true, the temperature should be displayed in C
+      componentKey: 0, //Refresh global variable for the graph
+      fetchData: null, //Reference to temperature data received from HTTP request
+      modalEnable: false, //Global boolean that brings open the settings menu when set to true
+      carrier: "att", //Carrier the user selected
+      upperTemp: 50, //Upper temperature of graph key
+      lowerTemp: 10, //Lower temperature of graph key
+      phoneNumber: '3193335747', //Phone number the user selects
+      dataGrabbed: true, //One time boolean value that ensures we grab settings data
+      errorBool: true, //Global boolean that ensures temperatuere is converted properly
+      //Data for graph
       data: {
-        labels: [],
+        labels: [], //Graph labels
         datasets: [
           {
+            //Graph settings
             lineTension: 0.5,
             borderColor: "#ea5545",
             backgroundColor: '#ea5545',
@@ -51,8 +51,8 @@ export default {
           }
         ]
       },
+      //Grpah options
       options: {
-        //responsive: true,
         maintainAspectRatio: true,
         type: 'linear',
         bezierCurve: true,
@@ -61,6 +61,7 @@ export default {
             radius: 0,
           },
         },
+        //x and y axis settings
         scales: {
           x: {
             ticks: {
@@ -105,6 +106,7 @@ export default {
       while (true) {
         const startTime = performance.now(); // Get the start time
         const controller = new AbortController()
+        //Grabs settings data on first run
         if (this.dataGrabbed) {
           fetch('http://172.23.49.73:5000/settings')
             .then(res => res.json())
@@ -118,7 +120,8 @@ export default {
               console.log(error)
             });
         }
-        // 1 second timeout:
+        // 1 second timeout incase request fails
+        // Fetch temperature data and store accordingly
         const timeoutId = setTimeout(() => controller.abort(), 1000)
         fetch('http://172.23.49.73:5000/temp', { signal: controller.signal })
           .then(res => res.json())
@@ -136,6 +139,7 @@ export default {
             }
           }).catch((error) => {
             //this function is used for if the chart fetch fails
+            //Scrolls everything left
             if (this.fetchData != null) {
               for (var i = 0; i < 300; i++) {
                 if (i < 299) {
@@ -155,9 +159,7 @@ export default {
           });
         const endTime = performance.now(); // Get the end time
         const executionTime = endTime - startTime; // Calculate the execution time in milliseconds
-
         // Calculate the sleep duration based on the execution time
-
         const sleepDuration = Math.max(0, 1000 - executionTime); // Ensure a minimum sleep of 0 milliseconds
         await new Promise(resolve => setTimeout(resolve, sleepDuration)); // Sleep for the calculated duration
       }
@@ -187,6 +189,8 @@ export default {
           this.data.labels.push(300 - i)
         }
       }
+      //Checks if data is populated
+      //If so, convert to F or C and push to graph
       if (this.fetchData != null) {
         var list = this.fetchData
         if (!this.isCel && this.errorBool) {
