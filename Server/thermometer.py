@@ -1,20 +1,30 @@
 from textMessage import send_message
 
 
+# Function temp_loop continuously reads the temperature from the
+# sensor and appends it to the pi's temperature data array
 def temp_loop(pi):
+    # Read the temperature from the sensor
     try:
         temperature = read_temperature(pi)
     except OSError:
         temperature = None
 
+    # If the temperature data array's length is 300, remove the oldest element
     if len(pi.temp_data) >= 300:
         pi.temp_data.pop(0)
 
+    # Append null if the temperature is None, otherwise append the temperature
     if temperature is None:
         pi.temp_data.append("null")
     else:
         pi.temp_data.append(temperature)
 
+        # Check if the message buffer is False if so a text message can be sent so the current temp is
+        # checked against the max and min temp and if it is outside the range a message is sent and the
+        # message buffer is set to True. If the message buffer is initially True that means a text has
+        # already been sent. The current temperature is then checked against the max and min temp and if
+        # it is within the range the message buffer is set to False so a text can be sent again.
         if not pi.message_buffer:
             if temperature > pi.max_temp:
                 print("SENDING MAX TEMP MESSAGE")
@@ -37,6 +47,8 @@ def temp_loop(pi):
         print("Button Status COMP: " + str(pi.button_status_comp))
 
 
+# Function read_temperature reads the raw temperature data from
+# the sensor and returns the temperature in Celsius
 def read_temperature(pi):
     try:
         # Read the raw temperature data from the sensor

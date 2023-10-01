@@ -3,6 +3,7 @@ import time
 import smbus
 
 
+# LCD class for displaying data on the LCD screen
 class LCD:
     def __init__(self, pi_rev: int = 2, i2c_addr: int = 0x27, backlight: bool = True):
 
