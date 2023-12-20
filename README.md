@@ -1,7 +1,7 @@
 ### README for the ECE 4880 Project 1 Repository
 
 #### Repository Overview
-The [ECE 4880 Project 1](https://github.com/SamNicklez/ece4880project1) repository is a project that implements a thermometer with a web interface. It is a combination of a server-side Python application and a client-side Vue.js application.
+The [ECE 4880 Project 1]([https://github.com/SamNicklez/ece4880project1](https://github.com/SamNicklez/thermometer-app)) repository is a project that implements a thermometer with a web interface. It is a combination of a server-side Python application and a client-side Vue.js application.
 
 #### Project Description
 This project is designed to provide temperature readings through a web interface. It consists of two main parts: a server application written in Python and a client application developed using Vue.js.
@@ -26,9 +26,9 @@ This project is designed to provide temperature readings through a web interface
 
 #### Project Structure
 - **Client Application**:
-  - Vue.js components and assets (e.g., [`App.vue`](https://github.com/SamNicklez/ece4880project1/blob/main/Client/src/App.vue)).
-  - Main JavaScript file (e.g., [`main.js`](https://github.com/SamNicklez/ece4880project1/blob/main/Client/src/main.js)).
+  - Vue.js components and assets (e.g., [`App.vue`](https://github.com/SamNicklez/thermometer-app/blob/main/Client/src/App.vue)).
+  - Main JavaScript file (e.g., [`main.js`](https://github.com/SamNicklez/thermometer-app/blob/main/Client/src/main.js)).
 - **Server Application**:
-  - Python scripts for server logic and sensor interfacing (e.g., [`main.py`](https://github.com/SamNicklez/ece4880project1/blob/main/Server/main.py)).
+  - Python scripts for server logic and sensor interfacing (e.g., [`main.py`](https://github.com/SamNicklez/thermometer-app/blob/main/Server/main.py)).
 - **Testing**:
-  - Test scripts for API and Raspberry Pi functionalities (e.g., [`test_api.py`](https://github.com/SamNicklez/ece4880project1/blob/main/test/test_api.py)).
+  - Test scripts for API and Raspberry Pi functionalities (e.g., [`test_api.py`](https://github.com/SamNicklez/thermometer-app/blob/main/test/test_api.py)).
