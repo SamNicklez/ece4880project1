@@ -1,7 +1,7 @@
 ### README for the ECE 4880 Project 1 Repository
 
 #### Repository Overview
-The [ECE 4880 Project 1]([https://github.com/SamNicklez/ece4880project1](https://github.com/SamNicklez/thermometer-app)) repository is a project that implements a thermometer with a web interface. It is a combination of a server-side Python application and a client-side Vue.js application.
+The [ECE 4880 Project 1](https://github.com/SamNicklez/thermometer-app) repository is a project that implements a thermometer with a web interface. It is a combination of a server-side Python application and a client-side Vue.js application.
 
 #### Project Description
 This project is designed to provide temperature readings through a web interface. It consists of two main parts: a server application written in Python and a client application developed using Vue.js.
